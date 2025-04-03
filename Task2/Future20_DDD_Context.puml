@@ -1,0 +1,48 @@
+@startuml name Future 2.0 DDD Context 
+title DataMart
+
+top to bottom direction
+skinparam Linetype ortho
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+
+
+
+Enterprise_Boundary(f210, "Future20", "", "",""){ 
+
+    Enterprise_Boundary(clinetService, "Клиентские сервисы"){
+        System(clientsMangement, "Управление клиентами","Профиль, статус, (Данные по клиентам)")
+        System(financeService, "Финансавые услуги", "Прием платежей, Финансовая история клиента, Счета") 
+        System(medManagement, "Управление мед. услугами", "Приемы, медицинская история, анализы (Медицинские карты и истории болезни, в том числе — данные исследований, выполненных в ходе лечения.)") 
+
+        Rel(financeService, clientsMangement, "данные по клиенту")
+        Rel(medManagement, clientsMangement, "данные по клиенту")
+        Rel(medManagement, financeService, "проверка оплаты услуги")
+    }
+    Enterprise_Boundary(backService, "Обеспечивающие сервисы"){
+        System(financeManagement, "Управление финансами", "Финансовая история, Счета, Финансовая отчётность и много другой информации") 
+        System(creditManagement, "Управление кредитами", "Данные о кредитах") 
+        System(hrManagement, "Управление персоналом", "Данные по персоналу больницы") 
+        System(storeManagement, "Управление складом", "Данные по инвентаризации")
+
+        Rel(financeManagement, creditManagement, "Получение даннх")
+        Rel(financeManagement, hrManagement, "Получение даннх")
+        Rel(financeManagement, storeManagement, "Получение даннх")
+    }
+    Rel(financeService, creditManagement, "получение кредита")
+    Rel_U(financeService, financeManagement, "учет платежей")
+    Rel(medManagement, hrManagement, "графики работы")
+
+}
+System_Ext(extAI, "ИИ-сервисы", "работы с мед. данными")
+System_Ext(extFin, "Финтех-сервисы", "компании с банковской лицензией")
+
+Rel_L(medManagement, extAI, "данные для обработки")
+Rel(financeManagement,extFin, "поставка данных для обработки")
+Rel(creditManagement, extFin, "выдача кредитов" )
+
+
+
+@enduml
+
