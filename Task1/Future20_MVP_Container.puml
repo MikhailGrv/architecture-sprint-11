@@ -1,0 +1,77 @@
+@startuml name Future 2.0 Container
+title DataMart
+
+top to bottom direction
+
+!include https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+
+
+System_Boundary(f20, "Future20", ""){
+    Person(uClient, "Сотрудник", "Сотрудник компании")
+    System(ad, "Пользователи роли", "Active directory")
+    System(f20MainOffice, "Головной офис", "") 
+    System(f20Clinic, "Клиники", "")    
+    System_Boundary(sDWH, "Хранилище данных", "Data LakeHouse"){
+        System(s3, "Хранилище s3", "MinIO")    
+        System(catalog, "Каталог", "Nessie")    
+    }
+    System(bacthInput, "Загрузчик данных (пакетная)", "Airflow")    
+    System(streamInput, "Загрузчик данных (потоковая)", "Apache Flink/Nifi")    
+    System(dlhUI, "DataUI/API", "Dremio")  
+    Rel(bacthInput, catalog, "Загрузка данных")
+    Rel(streamInput, catalog, "Загрузка данных")
+    Rel(dlhUI, catalog, "Использование данных")
+    Rel(catalog, s3, "Хранение данных")
+    
+    System(powerBI, "Построение отчености BI", "Power BI")  
+    Rel(powerBI, dlhUI, "Получение витрин")
+
+    System(dwh, "DWH", "MS SQL Server 2028")
+    Rel(dlhUI, dwh, "Использование данных")
+
+    System(esb, "интеграционная шина", "Apache camel")
+    Rel(esb, bacthInput, "Пакентые даныне")
+    Rel(esb, streamInput, "Потоковые данные")
+    
+
+    System(keycloak, "Пользователи/роли", "keycloak")
+    Rel(keycloak, ad, "Роли пользователей")
+    Rel(uClient, keycloak, "Идентификация, авторизация")
+    System_Boundary(portal, "Витрина данных", "k8s сервисы"){
+        System(api, "APIGateway", "nginx")
+        Rel(api, keycloak, "ключи")
+        System(reporting, "Сервисы отчености", "java/C#")
+        System(cache, "КЭШ", "Redis")
+        System(bus, "Отчеты(запросы и результаты)", "Kafka")
+        Rel(reporting, bus,  "Запросы на отчеты, получение готовых отчетов")
+        Rel(reporting, cache,  "Хранение отчетов")
+        Rel(api, reporting,  "Запросы пользователей")
+
+        System(biAdapter, "Адаптер для PowerBI", "java/C#" )
+        Rel(biAdapter, bus, "")
+        Rel(biAdapter, powerBI, "")
+        System(dlhUIAdapter, "Адаптер для Dremio", "java/C#" )
+        Rel(dlhUIAdapter, bus, "")
+        Rel(dlhUIAdapter, dlhUI, "")
+    }
+    
+
+}
+
+System_Ext(extAI, "ИИ-сервисы", "работы с мед. данными")
+System_Ext(extFin, "Финтех-сервисы", "компании с банковской лицензией")
+
+
+Rel(uClient, api, "Данные, SQL запросы")
+
+Rel(extAI, esb, "Мед. данные")
+Rel(extFin, esb, "Фин. данные")
+Rel(f20Clinic, esb, "Мед. данные")
+Rel(f20MainOffice, esb, "Фин. данные")
+
+
+
+
+@enduml
+
